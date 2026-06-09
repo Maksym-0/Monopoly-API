@@ -4,6 +4,7 @@ using Monopoly.Core.Models.Game;
 using Monopoly.Core.Models.Room;
 using Monopoly.Core.Models.Abstractions.Classes;
 using Monopoly.DataAccess.Postgres.Configurations;
+using Monopoly.Core.Models.Game.OfferSystem;
 
 namespace Monopoly.DataAccess.Postgres
 {
@@ -27,6 +28,9 @@ namespace Monopoly.DataAccess.Postgres
         public DbSet<Cell> Cells { get; set; }
         public DbSet<Core.Models.Game.Monopoly> Monopolies { get; set; }
 
+        public DbSet<TradeOffer> TradeOffers { get; set; }
+        public DbSet<Proposition> Propositions { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new AccountConfiguration());
@@ -44,6 +48,9 @@ namespace Monopoly.DataAccess.Postgres
             modelBuilder.ApplyConfiguration(new CellConfiguration());
             modelBuilder.ApplyConfiguration(new CompanyCellConfiguration());
             modelBuilder.ApplyConfiguration(new MonopolyConfiguration());
+
+            modelBuilder.ApplyConfiguration(new TradeOfferConfiguration());
+            modelBuilder.ApplyConfiguration(new PropositionConfiguration());
         }
     }
 }

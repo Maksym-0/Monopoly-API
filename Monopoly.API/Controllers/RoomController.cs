@@ -31,7 +31,7 @@ namespace Monopoly.Controllers
             }
             catch(Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
         [HttpPost("create")]
@@ -45,7 +45,7 @@ namespace Monopoly.Controllers
             }
             catch (Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
         [HttpPut("{roomId}/join")]
@@ -59,7 +59,7 @@ namespace Monopoly.Controllers
             }
             catch(Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
         [HttpPut("quit")]
@@ -73,19 +73,19 @@ namespace Monopoly.Controllers
             }
             catch(Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
 
-        private IActionResult CatchBadRequest(Exception ex)
+        private IActionResult CatchInternalServerError(Exception ex)
         {
-            ApiResponse<List<RoomDto>> response = new ApiResponse<List<RoomDto>>()
+            ApiResponse<List<Object>> response = new ApiResponse<List<Object>>()
             {
                 Success = false,
                 Message = ex.Message,
                 Data = null
             };
-            return BadRequest(response);
+            return StatusCode(500, response);
         }
     }
 }

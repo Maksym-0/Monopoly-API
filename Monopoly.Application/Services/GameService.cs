@@ -134,10 +134,10 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<PayDto>> PayToLeavePrisonAsync(Guid gameId, Guid accountId)
         {
-            Player? player = await _unitOfWork.Players.GetByAccountId(accountId);
-            TurnState? turnState = await _unitOfWork.TurnStates.GetByGameId(gameId);
+            Game? game = await _unitOfWork.Games.GetById(gameId);
 
-            ServiceResponse<PayDto> response = ValidatePayToLeavePrison(player, turnState);
+            ServiceResponse<PayDto> response = ValidatePayToLeavePrison(game, accountId, 
+                out Player? player, out TurnState? turnState);
             if (!response.Success)
                 return response;
 
@@ -276,10 +276,10 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<NextActionDto>> EndActionAsync(Guid gameId, Guid accountId)
         {
-            Player? player = await _unitOfWork.Players.GetByAccountId(accountId);
-            TurnState? turnState = await _unitOfWork.TurnStates.GetByGameId(gameId);
+            Game? game = await _unitOfWork.Games.GetById(gameId);
 
-            ServiceResponse<NextActionDto> response = ValidateEndAction(player, turnState);
+            ServiceResponse<NextActionDto> response = ValidateEndAction(game, accountId, 
+                out Player? player, out TurnState turnState);
             if (!response.Success)
                 return response;
 
@@ -316,7 +316,7 @@ namespace Monopoly.Application.Services
                 room.RemovePlayerByAccountId(accountId);
             }
 
-            game.LeaveByAccountId(accountId);
+            game.LeaveGame(player.Id);
 
             Player? winner = game.CheckWinner();
 
@@ -351,7 +351,8 @@ namespace Monopoly.Application.Services
             return response;
         }
 
-        private ServiceResponse<MoveDto> ValidateMove(Game? game, Guid accountId, out Player? player)
+        private ServiceResponse<MoveDto> ValidateMove(Game? game, Guid accountId, 
+            out Player? player)
         {
             player = null;
             
@@ -379,7 +380,8 @@ namespace Monopoly.Application.Services
             return new ServiceResponse<MoveDto>(true, "Валідація успішна", HttpStatusCode.OK, null); ;
             
         }
-        private ServiceResponse<PayDto> ValidatePayRent(Game? game, Guid accountId, out Player? player, out IMoneyEater? moneyEater)
+        private ServiceResponse<PayDto> ValidatePayRent(Game? game, Guid accountId, 
+            out Player? player, out IMoneyEater? moneyEater)
         {
             player = null;
             moneyEater = null;
@@ -417,11 +419,22 @@ namespace Monopoly.Application.Services
 
             return new ServiceResponse<PayDto>(true, "Валідація успішна", HttpStatusCode.OK, null);
         }
-        private ServiceResponse<PayDto> ValidatePayToLeavePrison(Player? player, TurnState? turnState)
+        private ServiceResponse<PayDto> ValidatePayToLeavePrison(Game? game, Guid accountId, 
+            out Player? player, out TurnState? turnState)
         {
+            player = null;
+            turnState = null;
+
+            if (game == null)
+                return new ServiceResponse<PayDto>(false, "Гру не знайдено", HttpStatusCode.NotFound, null);
+
+            player = game.Players.FirstOrDefault(p => p.AccountId == accountId);
+            
             if (player == null)
                 return new ServiceResponse<PayDto>(false, "Гравця не знайдено", HttpStatusCode.NotFound, null);
-            
+
+            turnState = game.TurnState;
+
             if (turnState == null)
                 return new ServiceResponse<PayDto>(false, "Статус ходу не знайдено", HttpStatusCode.NotFound, null);
 
@@ -585,10 +598,21 @@ namespace Monopoly.Application.Services
 
             return new ServiceResponse<LevelChangeDto>(true, "Валідація успішна", HttpStatusCode.OK, null);
         }
-        private ServiceResponse<NextActionDto> ValidateEndAction(Player? player, TurnState? turnState)
+        private ServiceResponse<NextActionDto> ValidateEndAction(Game? game, Guid accountId,
+            out Player? player, out TurnState? turnState)
         {
+            player = null;
+            turnState = null;
+
+            if (game == null)
+                return new ServiceResponse<NextActionDto>(false, "Гру не знайдено", HttpStatusCode.NotFound, null);
+
+            player = game.Players.FirstOrDefault(p => p.AccountId == accountId);
+
             if (player == null)
                 return new ServiceResponse<NextActionDto>(false, "Гравця не знайдено", HttpStatusCode.NotFound, null);
+
+            turnState = game.TurnState;
 
             if (turnState == null)
                 return new ServiceResponse<NextActionDto>(false, "Статус ходу не знайдено", HttpStatusCode.NotFound, null);
@@ -604,10 +628,14 @@ namespace Monopoly.Application.Services
 
             if (turnState.NeedPay)
                 return new ServiceResponse<NextActionDto>(false, "Гравець не може завершити хід, не оплатившив рахунки", HttpStatusCode.BadRequest, null);
-            
+
+            if (turnState.Game.CurrentTradeOffer != null)
+                return new ServiceResponse<NextActionDto>(false, "Гравець не може завершити хід, поки існує активна торгова пропозиція", HttpStatusCode.BadRequest, null);
+
             return new ServiceResponse<NextActionDto>(true, "Валідація успішна", HttpStatusCode.OK, null);
         }
-        private ServiceResponse<LeaveGameDto> ValidateLeave(Game? game, Guid accountId, out Player? player, out TurnState? turnState)
+        private ServiceResponse<LeaveGameDto> ValidateLeave(Game? game, Guid accountId, 
+            out Player? player, out TurnState? turnState)
         {
             player = null;
             turnState = null;

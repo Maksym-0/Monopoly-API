@@ -5,7 +5,7 @@
         public Guid Id { get; internal set; }
 
         public Guid GameId { get; internal set; }
-        public Game Game {  get; set; }
+        public Game Game { get; internal set; }
 
         public int CurrentPlayerIndex { get; internal set; } = 0;
 

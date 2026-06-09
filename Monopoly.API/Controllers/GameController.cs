@@ -30,7 +30,7 @@ namespace Monopoly.Controllers
             }
             catch(Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
         [HttpPut("move")]
@@ -44,7 +44,7 @@ namespace Monopoly.Controllers
             }
             catch(Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
         [HttpPut("pay/rent")]
@@ -58,7 +58,7 @@ namespace Monopoly.Controllers
             }
             catch (Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
         [HttpPut("pay/prison")]
@@ -72,7 +72,7 @@ namespace Monopoly.Controllers
             }
             catch(Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
         [HttpPut("cells/buy")]
@@ -86,7 +86,7 @@ namespace Monopoly.Controllers
             }
             catch(Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
         [HttpPut("cells/{cellNumber}/levelup")]
@@ -100,7 +100,7 @@ namespace Monopoly.Controllers
             }
             catch(Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
         [HttpPut("cells/{cellNumber}/leveldown")]
@@ -114,7 +114,7 @@ namespace Monopoly.Controllers
             }
             catch(Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
         [HttpPut("endaction")]
@@ -128,7 +128,7 @@ namespace Monopoly.Controllers
             }
             catch(Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
         [HttpPut("leave")]
@@ -142,11 +142,11 @@ namespace Monopoly.Controllers
             }
             catch(Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
 
-        private IActionResult CatchBadRequest(Exception ex)
+        private IActionResult CatchInternalServerError(Exception ex)
         {
             ApiResponse<object> response = new ApiResponse<object>()
             {
@@ -154,7 +154,7 @@ namespace Monopoly.Controllers
                 Message = ex.Message,
                 Data = null
             };
-            return BadRequest(response);
+            return StatusCode(500, response);
         }
     }
 }

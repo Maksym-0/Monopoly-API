@@ -28,6 +28,14 @@ namespace Monopoly.DataAccess.Postgres.Repositories
                 .Include(g => g.Board)
                     .ThenInclude(b => b.Monopolies)
                     .ThenInclude(m => m.Cells)
+                .Include(g => g.CurrentTradeOffer)
+                    .ThenInclude(t => t.OffererProposition)
+                .Include(g => g.CurrentTradeOffer)
+                    .ThenInclude(t => t.OffereeProposition)
+                .Include(g => g.CurrentTradeOffer)
+                    .ThenInclude(t => t.Offerer)
+                .Include(g => g.CurrentTradeOffer)
+                    .ThenInclude(t => t.Offeree)
                 .FirstOrDefaultAsync(g => g.Id == id);
         }
         public async Task Add(Game game)

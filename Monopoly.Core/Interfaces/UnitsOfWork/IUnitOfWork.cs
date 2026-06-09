@@ -7,9 +7,6 @@ namespace Monopoly.Core.Interfaces.UnitsOfWork
         IAccountsRepository Accounts { get; }
         IRoomsRepository Rooms { get; }
         IGamesRepository Games { get; }
-        IBoardsRepository Boards { get; }
-        IPlayersRepository Players { get; }
-        ITurnStatesRepository TurnStates { get; }
 
         Task<int> SaveChangesAsync();
     }

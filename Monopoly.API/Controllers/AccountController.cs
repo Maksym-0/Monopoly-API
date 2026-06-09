@@ -29,7 +29,7 @@ namespace Monopoly.Controllers
             }
             catch(Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
         [HttpPost("register")]
@@ -43,7 +43,7 @@ namespace Monopoly.Controllers
             }
             catch (Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
         [HttpPost("login")]
@@ -57,7 +57,7 @@ namespace Monopoly.Controllers
             }
             catch (Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
         [HttpDelete("delete")]
@@ -71,11 +71,11 @@ namespace Monopoly.Controllers
             }
             catch (Exception ex)
             {
-                return CatchBadRequest(ex);
+                return CatchInternalServerError(ex);
             }
         }
 
-        private IActionResult CatchBadRequest(Exception ex)
+        private IActionResult CatchInternalServerError(Exception ex)
         {
             ApiResponse<object> response = new ApiResponse<object>()
             {
@@ -83,7 +83,7 @@ namespace Monopoly.Controllers
                 Message = ex.Message,
                 Data = null
             };
-            return BadRequest(response);
+            return StatusCode(500, response);
         }
     }
 }

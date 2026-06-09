@@ -5,13 +5,13 @@ namespace Monopoly.Core.Models.Game
 {
     public class GameBoard
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; private set; }
         
-        public Guid GameId { get; set; }
-        public Game Game { get; set; }
+        public Guid GameId { get; private set; }
+        public Game Game { get; internal set; }
 
-        public List<Cell> Cells { get; set; } = new();
-        public List<Monopoly> Monopolies { get; set; } = new();
+        public List<Cell> Cells { get; private set; } = new();
+        public List<Monopoly> Monopolies { get; private set; } = new();
 
         public GameBoard(Guid id, Guid gameId, List<Cell> cells, List<Monopoly> monopolies)
         {

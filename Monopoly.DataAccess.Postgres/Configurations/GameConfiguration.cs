@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Monopoly.Core.Models.Game;
+using Monopoly.Core.Models.Game.OfferSystem;
 
 namespace Monopoly.DataAccess.Postgres.Configurations
 {
@@ -28,6 +29,11 @@ namespace Monopoly.DataAccess.Postgres.Configurations
             builder.HasOne(g => g.TurnState)
                 .WithOne(t => t.Game)
                 .HasForeignKey<TurnState>(t => t.GameId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(g => g.CurrentTradeOffer)
+                .WithOne(t => t.Game)
+                .HasForeignKey<TradeOffer>(t => t.GameId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

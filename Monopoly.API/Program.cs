@@ -42,15 +42,13 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IAccountsRepository, AccountsRepository>();
 builder.Services.AddScoped<IRoomsRepository, RoomsRepository>();
 builder.Services.AddScoped<IGamesRepository, GamesRepository>();
-builder.Services.AddScoped<IBoardsRepository, BoardsRepository>();
-builder.Services.AddScoped<IPlayersRepository, PlayersRepository>();
-builder.Services.AddScoped<ITurnStatesRepository, TurnStatesRepository>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IGameService, GameService>();
+builder.Services.AddScoped<ITradingService, TradingService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>

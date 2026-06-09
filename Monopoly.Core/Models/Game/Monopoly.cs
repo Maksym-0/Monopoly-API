@@ -45,8 +45,13 @@ namespace Monopoly.Core.Models.Game
             if(result)
             {
                 IsMonopoly = true;
-                UpdateCellsRent();
             }
+            else
+            {
+                IsMonopoly = false;
+            }
+            
+            UpdateCellsRent();
             return result;
         }
         private void UpdateCellsRent()
