@@ -13,23 +13,23 @@ namespace Monopoly.DataAccess.Postgres.Repositories
             _context = context;
         }
 
-        public async Task<Account?> GetById(Guid accountId)
+        public async Task<Account?> GetByIdAsync(Guid accountId)
         {
             return await _context.Accounts
                 .FirstOrDefaultAsync(a => a.Id == accountId);
         }
-        public async Task<Account?> GetByName(string name)
+        public async Task<Account?> GetByNameAsync(string name)
         {
             return await _context.Accounts
                 .FirstOrDefaultAsync(a => a.Name == name);
         }
-        public async Task Add(Account account)
+        public async Task AddAsync(Account account)
         {
             await _context.AddAsync(account);
         }
-        public async Task DeleteById(Guid accountId)
+        public async Task DeleteByIdAsync(Guid accountId)
         {
-            Account? account = await GetById(accountId);
+            Account? account = await GetByIdAsync(accountId);
 
             if(account != null)
                 _context.Accounts.Remove(account);

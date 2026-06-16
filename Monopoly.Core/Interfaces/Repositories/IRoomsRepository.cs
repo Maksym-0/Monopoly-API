@@ -4,15 +4,15 @@ namespace Monopoly.Core.Interfaces.Repositories
 {
     public interface IRoomsRepository
     {
-        public Task<List<Room>> GetRooms();
-        public Task<Room?> GetRoomById(Guid roomId);
-        public Task AddRoom(Room room);
-        public Task DeleteById(Guid roomId);
+        public Task<List<Room>> GetRoomsAsync();
+        public Task<Room?> GetRoomByIdAsync(Guid roomId);
+        public Task AddRoomAsync(Room room);
+        public Task DeleteByIdAsync(Guid roomId);
 
-        public Task<List<PlayerInRoom>> GetPlayersByRoomId(Guid roomId);
-        public Task<PlayerInRoom?> GetPlayerById(Guid playerId);
-        Task<PlayerInRoom?> GetPlayerByAccountId(Guid accountId);
-        public Task AddPlayer(Guid roomId, PlayerInRoom player);
-        public Task DeletePlayerById(Guid roomId, Guid playerId);
+        public Task<List<PlayerInRoom>> GetPlayersByRoomIdAsync(Guid roomId);
+        public Task<PlayerInRoom?> GetPlayerByIdAsync(Guid playerId);
+        Task<PlayerInRoom?> GetPlayerByAccountIdAsync(Guid accountId);
+        public Task AddPlayerAsync(PlayerInRoom player);
+        public Task DeletePlayerByIdAsync(Guid roomId, Guid playerId);
     }
 }

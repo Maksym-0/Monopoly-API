@@ -27,7 +27,7 @@ namespace Monopoly.Application.Services
 
         public async Task<ServiceResponse<AccountDto>> MeAsync(Guid id)
         {
-            Account? account = await _unitOfWork.Accounts.GetById(id);
+            Account? account = await _unitOfWork.Accounts.GetByIdAsync(id);
 
             ServiceResponse<AccountDto> response = ValidateMe(account);
             if (!response.Success)
@@ -42,14 +42,14 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<AccountDto>> RegisterAsync(string name, string password)
         {
-            Account? account = await _unitOfWork.Accounts.GetByName(name);
+            Account? account = await _unitOfWork.Accounts.GetByNameAsync(name);
 
             ServiceResponse<AccountDto> response = ValidateRegister(account, password);
             if (!response.Success)
                 return response;
 
             account = new Account(Guid.NewGuid(), name, password);
-            await _unitOfWork.Accounts.Add(account);
+            await _unitOfWork.Accounts.AddAsync(account);
 
             await _unitOfWork.SaveChangesAsync();
 
@@ -62,7 +62,7 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<LoginDto>> LoginAsync(string name, string password)
         {
-            Account? account = await _unitOfWork.Accounts.GetByName(name);
+            Account? account = await _unitOfWork.Accounts.GetByNameAsync(name);
 
             ServiceResponse<LoginDto> response = ValidateLogin(account, password);
             if (!response.Success)
@@ -86,13 +86,13 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<DeleteAccountDto>> DeleteAsync(string name, string password)
         {
-            Account? account = await _unitOfWork.Accounts.GetByName(name);
+            Account? account = await _unitOfWork.Accounts.GetByNameAsync(name);
 
             ServiceResponse<DeleteAccountDto> response = await ValidateDeleteAsync(account, password);
             if (!response.Success)
                 return response;
 
-            await _unitOfWork.Accounts.DeleteById(account.Id);
+            await _unitOfWork.Accounts.DeleteByIdAsync(account.Id);
             
             await _unitOfWork.SaveChangesAsync();
 
@@ -148,7 +148,7 @@ namespace Monopoly.Application.Services
             if (password == null)
                 return new ServiceResponse<DeleteAccountDto>(false, "Для видалення акаунту необхідно ввести пароль", HttpStatusCode.BadRequest, null);
 
-            PlayerInRoom? playerInRoom = await _unitOfWork.Rooms.GetPlayerByAccountId(account.Id);
+            PlayerInRoom? playerInRoom = await _unitOfWork.Rooms.GetPlayerByAccountIdAsync(account.Id);
 
             if (account.Password != password)
                 return new ServiceResponse<DeleteAccountDto>(false, "Введено неправильний пароль", HttpStatusCode.BadRequest, null);

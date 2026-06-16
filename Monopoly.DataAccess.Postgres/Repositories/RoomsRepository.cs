@@ -13,7 +13,7 @@ namespace Monopoly.DataAccess.Postgres.Repositories
             _context = context;
         }
 
-        public async Task<List<Room>> GetRooms()
+        public async Task<List<Room>> GetRoomsAsync()
         {
             return await _context.Rooms
                 .AsNoTracking()
@@ -22,7 +22,7 @@ namespace Monopoly.DataAccess.Postgres.Repositories
                 .Include(r => r.Game)
                 .ToListAsync();
         }
-        public async Task<Room?> GetRoomById(Guid roomId)
+        public async Task<Room?> GetRoomByIdAsync(Guid roomId)
         {
             return await _context.Rooms
                 .Include(r => r.Players)
@@ -31,43 +31,43 @@ namespace Monopoly.DataAccess.Postgres.Repositories
                     .ThenInclude(g => g.Players)
                 .FirstOrDefaultAsync(r => r.Id == roomId);
         }
-        public async Task AddRoom(Room room)
+        public async Task AddRoomAsync(Room room)
         {
             await _context.AddAsync(room);
         }
-        public async Task DeleteById(Guid roomId)
+        public async Task DeleteByIdAsync(Guid roomId)
         {
-            Room? room = await GetRoomById(roomId);
+            Room? room = await GetRoomByIdAsync(roomId);
 
             if (room != null)
                 _context.Rooms.Remove(room);
         }
 
-        public async Task<List<PlayerInRoom>> GetPlayersByRoomId(Guid roomId)
+        public async Task<List<PlayerInRoom>> GetPlayersByRoomIdAsync(Guid roomId)
         {
             return await _context.PlayersInRooms
                 .Where(p => p.RoomId == roomId)
                 .ToListAsync();
         }
-        public async Task<PlayerInRoom?> GetPlayerById(Guid playerId)
+        public async Task<PlayerInRoom?> GetPlayerByIdAsync(Guid playerId)
         {
             return await _context.PlayersInRooms
                 .FirstOrDefaultAsync(p => p.Id == playerId);
         }
-        public async Task<PlayerInRoom?> GetPlayerByAccountId(Guid accountId)
+        public async Task<PlayerInRoom?> GetPlayerByAccountIdAsync(Guid accountId)
         {
             return await _context.PlayersInRooms
                 .Include(p => p.Room)
                     .ThenInclude(r => r.Game)
                 .FirstOrDefaultAsync(p => p.AccountId == accountId);
         }
-        public async Task AddPlayer(Guid roomId, PlayerInRoom player)
+        public async Task AddPlayerAsync(PlayerInRoom player)
         {
             await _context.AddAsync(player);
         }
-        public async Task DeletePlayerById(Guid roomId, Guid playerId)
+        public async Task DeletePlayerByIdAsync(Guid roomId, Guid playerId)
         {
-            PlayerInRoom? player = await GetPlayerById(playerId);
+            PlayerInRoom? player = await GetPlayerByIdAsync(playerId);
 
             if (player != null)
                 _context.PlayersInRooms.Remove(player);

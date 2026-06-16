@@ -21,7 +21,7 @@ namespace Monopoly.Application.Services
 
         public async Task<ServiceResponse<TradeOfferDto>> GetCurrentTradeOfferAsync(Guid gameId)
         {
-            Game? game = await _unitOfWork.Games.GetById(gameId);
+            Game? game = await _unitOfWork.Games.GetByIdAsync(gameId);
 
             ServiceResponse<TradeOfferDto> response = ValidateGetCurrentTradeOffer(game);
             if (!response.Success)
@@ -34,7 +34,7 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<TradeOfferDto>> CreateTradeOfferAsync(Guid gameId, Guid accountId, CreateTradeOfferRequest request)
         {
-            Game? game = await _unitOfWork.Games.GetById(gameId);
+            Game? game = await _unitOfWork.Games.GetByIdAsync(gameId);
 
             ServiceResponse<TradeOfferDto> response = ValidateCreateTradeOffer(game, request, accountId,
                 out Player? offerer, out Player? offeree);
@@ -51,15 +51,17 @@ namespace Monopoly.Application.Services
             response.Message = "Пропозицію обміну успішно створено";
             response.Data = new TradeOfferDto(tradeOffer);
 
+            await _unitOfWork.Games.AddTradeOfferAsync(tradeOffer);
+
             await _unitOfWork.SaveChangesAsync();
 
             return response;
         }
         public async Task<ServiceResponse<AcceptTradeDto>> AcceptTradeOfferAsync(Guid gameId, Guid accountId)
         {
-            Game? game = await _unitOfWork.Games.GetById(gameId);
+            Game? game = await _unitOfWork.Games.GetByIdAsync(gameId);
 
-            ServiceResponse<AcceptTradeDto> response = ValidateAcceptTradeOfferAsync(game, accountId,
+            ServiceResponse<AcceptTradeDto> response = ValidateAcceptTradeOffer(game, accountId,
                 out Player? offerer, out Player? offeree);
             if (!response.Success)
                 return response;
@@ -77,7 +79,7 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<CancelTradeDto>> CancelTradeOfferAsync(Guid gameId, Guid accountId)
         {
-            Game? game = await _unitOfWork.Games.GetById(gameId);
+            Game? game = await _unitOfWork.Games.GetByIdAsync(gameId);
 
             ServiceResponse<CancelTradeDto> response = ValidateCancelTradeOffer(game, accountId, out Player? canceler);
             if (!response.Success)
@@ -128,27 +130,40 @@ namespace Monopoly.Application.Services
             if (offeree == null)
                 return new ServiceResponse<TradeOfferDto>(false, "Гравця, який отримує пропозицію обміну, не знайдено", HttpStatusCode.NotFound, null);
 
+            if (offerer.Id == offeree.Id)
+                return new ServiceResponse<TradeOfferDto>(false, "Неможливо створити пропозицію обміну самому собі", HttpStatusCode.BadRequest, null);
+
             if (offerer.Balance < request.OffererMoneyProposition)
                 return new ServiceResponse<TradeOfferDto>(false, "Гравцю, який робить пропозицію обміну, не вистачає коштів", HttpStatusCode.BadRequest, null);
 
             if (offeree.Balance < request.OffereeMoneyProposition)
                 return new ServiceResponse<TradeOfferDto>(false, "Гравцю, який отримує пропозицію обміну, не вистачає коштів", HttpStatusCode.BadRequest, null);
 
-            foreach (Cell cell in offerer.OwnedCells)
+            if (request.OffererCellNumbers != null)
             {
-                if (!request.OffererCellNumbers.Contains(cell.Number))
-                    return new ServiceResponse<TradeOfferDto>(false, "Гравець, який робить пропозицію обміну, не володіє всіма клітинками, які він пропонує", HttpStatusCode.BadRequest, null);
+                foreach (int cellNumber in request.OffererCellNumbers)
+                {
+                    if (!offerer.OwnedCells.Any(c => c.Number == cellNumber))
+                    {
+                        return new ServiceResponse<TradeOfferDto>(false, "Ви намагаєтесь віддати клітину, якою не володієте", HttpStatusCode.BadRequest, null);
+                    }
+                }
             }
 
-            foreach (Cell cell in offeree.OwnedCells)
+            if (request.OffereeCellNumbers != null)
             {
-                if (!request.OffereeCellNumbers.Contains(cell.Number))
-                    return new ServiceResponse<TradeOfferDto>(false, "Гравець, який отримує пропозицію обміну, не володіє всіма клітинками, які він пропонує", HttpStatusCode.BadRequest, null);
+                foreach (int cellNumber in request.OffereeCellNumbers)
+                {
+                    if (!offeree.OwnedCells.Any(c => c.Number == cellNumber))
+                    {
+                        return new ServiceResponse<TradeOfferDto>(false, "Ви просите клітину, якою інший гравець не володіє", HttpStatusCode.BadRequest, null);
+                    }
+                }
             }
 
             return new ServiceResponse<TradeOfferDto>(true, "Валідація успішна", HttpStatusCode.OK, null);
         }
-        private ServiceResponse<AcceptTradeDto> ValidateAcceptTradeOfferAsync(Game? game, Guid offereeAccountId,
+        private ServiceResponse<AcceptTradeDto> ValidateAcceptTradeOffer(Game? game, Guid offereeAccountId,
             out Player? offerer, out Player? offeree)
         {
             offerer = null;
@@ -161,6 +176,9 @@ namespace Monopoly.Application.Services
                 return new ServiceResponse<AcceptTradeDto>(false, "Немає активної пропозиції обміну", HttpStatusCode.NotFound, null);
 
             offerer = game.Players.FirstOrDefault(p => p.AccountId == game.CurrentTradeOffer.OffererId);
+
+            if (offerer.AccountId == offereeAccountId)
+                return new ServiceResponse<AcceptTradeDto>(false, "Неможливо прийняти пропозицію обміну, якщо ви є її автором", HttpStatusCode.BadRequest, null);
 
             if (offerer == null)
                 return new ServiceResponse<AcceptTradeDto>(false, "Гравця, який робить пропозицію обміну, не знайдено", HttpStatusCode.NotFound, null);

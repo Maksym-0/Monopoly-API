@@ -11,6 +11,7 @@ namespace Monopoly.Core.DTO.Games
         public List<PlayerDto> Players { get; set; } = new();
         public BoardDto Board { get; set; }
         public TurnStateDto TurnState { get; set; }
+        public TradeOfferDto? CurrentTradeOffer { get; set; }
 
         public GameStateDto(Game game)
         {
@@ -22,6 +23,10 @@ namespace Monopoly.Core.DTO.Games
             }
             Board = new BoardDto(game.Board);
             TurnState = new TurnStateDto(game.TurnState);
+            if (game.CurrentTradeOffer != null)
+            {
+                CurrentTradeOffer = new TradeOfferDto(game.CurrentTradeOffer);
+            }
         }
         public GameStateDto() { }
     }

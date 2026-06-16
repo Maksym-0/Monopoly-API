@@ -21,7 +21,7 @@ namespace Monopoly.Application.Services
 
         public async Task<ServiceResponse<GameStateDto>> StatsOfGameAsync(Guid gameId)
         {
-            Game? game = await _unitOfWork.Games.GetById(gameId);
+            Game? game = await _unitOfWork.Games.GetByIdAsync(gameId);
             if (game == null)
                 return new ServiceResponse<GameStateDto>()
                 {
@@ -42,7 +42,7 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<MoveDto>> MoveAsync(Guid gameId, Guid accountId)
         {
-            Game? game = await _unitOfWork.Games.GetById(gameId);
+            Game? game = await _unitOfWork.Games.GetByIdAsync(gameId);
             
             ServiceResponse<MoveDto> response = ValidateMove(game, accountId, 
                 out Player? player);
@@ -84,7 +84,7 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<PayDto>> PayRentAsync(Guid gameId, Guid accountId)
         {
-            Game? game = await _unitOfWork.Games.GetById(gameId);
+            Game? game = await _unitOfWork.Games.GetByIdAsync(gameId);
 
             ServiceResponse<PayDto> response = ValidatePayRent(game, accountId, 
                 out Player? player, out IMoneyEater? moneyEater);
@@ -121,6 +121,7 @@ namespace Monopoly.Application.Services
                 player.ApplyToBalance(-moneyEater.Rent);
 
                 payResponse.Amount = moneyEater.Rent;
+                payResponse.NewPlayerBalance = player.Balance;
             }
 
             game.TurnState.CompletePayment();
@@ -134,7 +135,7 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<PayDto>> PayToLeavePrisonAsync(Guid gameId, Guid accountId)
         {
-            Game? game = await _unitOfWork.Games.GetById(gameId);
+            Game? game = await _unitOfWork.Games.GetByIdAsync(gameId);
 
             ServiceResponse<PayDto> response = ValidatePayToLeavePrison(game, accountId, 
                 out Player? player, out TurnState? turnState);
@@ -157,6 +158,8 @@ namespace Monopoly.Application.Services
 
                 Amount = Constants.LeavePrisonCost,
 
+                IsPrisonPay = true,
+
                 NewPlayerBalance = player.Balance,
             };
             
@@ -167,7 +170,7 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<BuyDto>> BuyCellAsync(Guid gameId, Guid accountId)
         {
-            Game? game = await _unitOfWork.Games.GetById(gameId);
+            Game? game = await _unitOfWork.Games.GetByIdAsync(gameId);
 
             ServiceResponse<BuyDto> response = ValidateBuy(game, accountId, 
                 out Player? player, out Cell? cell, out IOwnable? ownableCell);
@@ -206,7 +209,7 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<LevelChangeDto>> LevelUpAsync(Guid gameId, Guid accountId, int cellNumber)
         {
-            Game? game = await _unitOfWork.Games.GetById(gameId);
+            Game? game = await _unitOfWork.Games.GetByIdAsync(gameId);
 
             ServiceResponse<LevelChangeDto> response = ValidateLevelUp(game, accountId, cellNumber, 
                 out Player? player, out TurnState? turnState, out Cell? cell, out IUpgradable? upgradableCell);
@@ -242,7 +245,7 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<LevelChangeDto>> LevelDownAsync(Guid gameId, Guid accountId, int cellNumber)
         {
-            Game? game = await _unitOfWork.Games.GetById(gameId);
+            Game? game = await _unitOfWork.Games.GetByIdAsync(gameId);
 
             ServiceResponse<LevelChangeDto> response = ValidateLevelDown(game, accountId, cellNumber,
                 out Player? player, out TurnState? turnState, out Cell? cell, out IUpgradable? upgradableCell);
@@ -276,7 +279,7 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<NextActionDto>> EndActionAsync(Guid gameId, Guid accountId)
         {
-            Game? game = await _unitOfWork.Games.GetById(gameId);
+            Game? game = await _unitOfWork.Games.GetByIdAsync(gameId);
 
             ServiceResponse<NextActionDto> response = ValidateEndAction(game, accountId, 
                 out Player? player, out TurnState turnState);
@@ -303,14 +306,14 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<LeaveGameDto>> LeaveGameAsync(Guid gameId, Guid accountId)
         {
-            Game? game = await _unitOfWork.Games.GetById(gameId);
+            Game? game = await _unitOfWork.Games.GetByIdAsync(gameId);
 
             ServiceResponse<LeaveGameDto> response = ValidateLeave(game, accountId, 
                 out Player? player, out TurnState? turnState);
             if (!response.Success)
                 return response;
 
-            Room? room = await _unitOfWork.Rooms.GetRoomById(game.RoomId);
+            Room? room = await _unitOfWork.Rooms.GetRoomByIdAsync(game.RoomId);
             if (room != null)
             {
                 room.RemovePlayerByAccountId(accountId);
@@ -337,7 +340,7 @@ namespace Monopoly.Application.Services
             {
                 response.Message = $"Гравець покинув гру. Гру завершено. Переможець: {winner.Name}";
                 
-                await _unitOfWork.Rooms.DeleteById(game.RoomId);
+                await _unitOfWork.Rooms.DeleteByIdAsync(game.RoomId);
 
                 leaveGameDto.Winner = new PlayerDto(winner);
             }

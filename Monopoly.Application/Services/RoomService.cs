@@ -26,7 +26,7 @@ namespace Monopoly.Application.Services
 
         public async Task<ServiceResponse<List<RoomDto>>> GetAllRoomsAsync()
         {
-            List<Room> rooms = await _unitOfWork.Rooms.GetRooms();
+            List<Room> rooms = await _unitOfWork.Rooms.GetRoomsAsync();
             List<RoomDto> roomResponces = new List<RoomDto>();
 
             ServiceResponse<List<RoomDto>> response = new ServiceResponse<List<RoomDto>>(true, "Отримано список наявних кімнат", HttpStatusCode.OK, roomResponces);
@@ -43,10 +43,10 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<RoomDto>> CreateRoomAsync(int maxNumberOfPlayers, string? password, Guid accountId)
         {
-            Account? account = await _unitOfWork.Accounts.GetById(accountId);
-            PlayerInRoom? playerInRoom = await _unitOfWork.Rooms.GetPlayerByAccountId(accountId);
+            Account? account = await _unitOfWork.Accounts.GetByIdAsync(accountId);
+            PlayerInRoom? playerInRoom = await _unitOfWork.Rooms.GetPlayerByAccountIdAsync(accountId);
 
-            ServiceResponse<RoomDto> response = ValidateCreateRoomAsync(maxNumberOfPlayers, playerInRoom, account);
+            ServiceResponse<RoomDto> response = ValidateCreateRoom(maxNumberOfPlayers, playerInRoom, account);
             if (!response.Success)
                 return response;
             
@@ -61,7 +61,7 @@ namespace Monopoly.Application.Services
             
             room.AddPlayer(newPlayerInRoom, password);
 
-            await _unitOfWork.Rooms.AddRoom(room);
+            await _unitOfWork.Rooms.AddRoomAsync(room);
 
             await _unitOfWork.SaveChangesAsync();
             
@@ -74,21 +74,21 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<JoinRoomDto>> JoinRoomAsync(Guid roomId, string? password, Guid accountId)
         {
-            Room? room = await _unitOfWork.Rooms.GetRoomById(roomId);
-            PlayerInRoom? playerInRoom = await _unitOfWork.Rooms.GetPlayerByAccountId(accountId);
-            Account? account = await _unitOfWork.Accounts.GetById(accountId);
+            Room? room = await _unitOfWork.Rooms.GetRoomByIdAsync(roomId);
+            PlayerInRoom? playerInRoom = await _unitOfWork.Rooms.GetPlayerByAccountIdAsync(accountId);
+            Account? account = await _unitOfWork.Accounts.GetByIdAsync(accountId);
 
-            ServiceResponse<JoinRoomDto> response = ValidateJoinRoomAsync(room, password, playerInRoom, account);
+            ServiceResponse<JoinRoomDto> response = ValidateJoinRoom(room, password, playerInRoom, account);
             if (!response.Success)
                 return response;
 
             PlayerInRoom newPlayerInRoom = new PlayerInRoom(Guid.NewGuid(), accountId, roomId, null, account.Name, room.CountOfPlayers + 1);
             room.AddPlayer(newPlayerInRoom, password);
 
-            await _unitOfWork.Rooms.AddPlayer(roomId, newPlayerInRoom);
+            await _unitOfWork.Rooms.AddPlayerAsync(newPlayerInRoom);
 
             if (room.CountOfPlayers >= room.MaxNumberOfPlayers)
-                await StartGameInRoom(room);
+                await StartGameInRoomAsync(room);
 
             await _unitOfWork.SaveChangesAsync();
 
@@ -110,13 +110,13 @@ namespace Monopoly.Application.Services
         }
         public async Task<ServiceResponse<QuitRoomDto>> QuitRoomAsync(Guid accountId)
         {
-            PlayerInRoom? playerToRemove = await _unitOfWork.Rooms.GetPlayerByAccountId(accountId);
+            PlayerInRoom? playerToRemove = await _unitOfWork.Rooms.GetPlayerByAccountIdAsync(accountId);
 
-            ServiceResponse<QuitRoomDto> response = ValidateQuitRoomAsync(playerToRemove);
+            ServiceResponse<QuitRoomDto> response = ValidateQuitRoom(playerToRemove);
             if (!response.Success)
                 return response;
 
-            Room room = await _unitOfWork.Rooms.GetRoomById(playerToRemove.RoomId);
+            Room room = await _unitOfWork.Rooms.GetRoomByIdAsync(playerToRemove.RoomId);
 
             QuitRoomDto quitRoomDto = new QuitRoomDto()
             {
@@ -154,7 +154,7 @@ namespace Monopoly.Application.Services
                 }
                 else
                 {
-                    await _unitOfWork.Rooms.DeleteById(playerToRemove.RoomId);
+                    await _unitOfWork.Rooms.DeleteByIdAsync(playerToRemove.RoomId);
 
                     quitRoomDto.IsRoomDeleted = true;
                     quitRoomDto.PlayerName = playerToRemove.Name;
@@ -172,7 +172,7 @@ namespace Monopoly.Application.Services
             return response;
         }
 
-        private ServiceResponse<RoomDto> ValidateCreateRoomAsync(int maxNumberOfPlayers, PlayerInRoom? playerInRoom, Account? account)      
+        private ServiceResponse<RoomDto> ValidateCreateRoom(int maxNumberOfPlayers, PlayerInRoom? playerInRoom, Account? account)      
         {
             if (account == null)
                 return new ServiceResponse<RoomDto>(false, "Акаунт не знайдено", HttpStatusCode.NotFound, null);
@@ -185,7 +185,7 @@ namespace Monopoly.Application.Services
 
             return new ServiceResponse<RoomDto>(true, "Валідація успішна", HttpStatusCode.OK, null);
         }
-        private ServiceResponse<JoinRoomDto> ValidateJoinRoomAsync(Room? room, string? password, PlayerInRoom? playerInRoom, Account? account)
+        private ServiceResponse<JoinRoomDto> ValidateJoinRoom(Room? room, string? password, PlayerInRoom? playerInRoom, Account? account)
         {
             if (account == null)
                 return new ServiceResponse<JoinRoomDto>(false, "Акаунт не знайдено", HttpStatusCode.NotFound, null);
@@ -207,7 +207,7 @@ namespace Monopoly.Application.Services
 
             return new ServiceResponse<JoinRoomDto>(true, "Валідація успішна", HttpStatusCode.OK, null);
         }
-        private ServiceResponse<QuitRoomDto> ValidateQuitRoomAsync(PlayerInRoom? playerInRoom)
+        private ServiceResponse<QuitRoomDto> ValidateQuitRoom(PlayerInRoom? playerInRoom)
         {
             if (playerInRoom == null)
                 return new ServiceResponse<QuitRoomDto>(false, "Неможливо покинути кімнату. Гравець не перебуває в жодній кімнаті", HttpStatusCode.BadRequest, null);
@@ -215,11 +215,11 @@ namespace Monopoly.Application.Services
             return new ServiceResponse<QuitRoomDto>(true, "Валідація успішна", HttpStatusCode.OK, null);
         }
 
-        private async Task<Game> StartGameInRoom(Room room)
+        private async Task<Game> StartGameInRoomAsync(Room room)
         {
             Game game = GameFactory.CreateGame(room);
 
-            await _unitOfWork.Games.Add(game);
+            await _unitOfWork.Games.AddAsync(game);
 
             room.StartGame();
             game.StartGame();
