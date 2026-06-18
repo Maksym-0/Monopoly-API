@@ -175,34 +175,37 @@ namespace Monopoly.Application.Services
             if (game.CurrentTradeOffer == null)
                 return new ServiceResponse<AcceptTradeDto>(false, "Немає активної пропозиції обміну", HttpStatusCode.NotFound, null);
 
-            offerer = game.Players.FirstOrDefault(p => p.AccountId == game.CurrentTradeOffer.OffererId);
-
-            if (offerer.AccountId == offereeAccountId)
-                return new ServiceResponse<AcceptTradeDto>(false, "Неможливо прийняти пропозицію обміну, якщо ви є її автором", HttpStatusCode.BadRequest, null);
+            offerer = game.Players.FirstOrDefault(p => p.Id == game.CurrentTradeOffer.OffererId);
 
             if (offerer == null)
                 return new ServiceResponse<AcceptTradeDto>(false, "Гравця, який робить пропозицію обміну, не знайдено", HttpStatusCode.NotFound, null);
 
+            if (offerer.AccountId == offereeAccountId)
+                return new ServiceResponse<AcceptTradeDto>(false, "Неможливо прийняти пропозицію обміну, якщо ви є її автором", HttpStatusCode.BadRequest, null);
+
             if (offerer.Balance < game.CurrentTradeOffer.OffererProposition.Money)
                 return new ServiceResponse<AcceptTradeDto>(false, "Гравцю, який робить пропозицію обміну, не вистачає коштів", HttpStatusCode.BadRequest, null);
 
-            offeree = game.Players.FirstOrDefault(p => p.AccountId == game.CurrentTradeOffer.OffereeId);
+            offeree = game.Players.FirstOrDefault(p => p.Id == game.CurrentTradeOffer.OffereeId);
 
             if (offeree == null)
                 return new ServiceResponse<AcceptTradeDto>(false, "Гравця, який отримує пропозицію обміну, не знайдено", HttpStatusCode.NotFound, null);
 
+            if (offeree.AccountId != offereeAccountId)
+                return new ServiceResponse<AcceptTradeDto>(false, "Неможливо прийняти пропозицію, яку Вам не пропонували", HttpStatusCode.BadRequest, null);
+
             if (offeree.Balance < game.CurrentTradeOffer.OffereeProposition.Money)
                 return new ServiceResponse<AcceptTradeDto>(false, "Гравцю, який отримує пропозицію обміну, не вистачає коштів", HttpStatusCode.BadRequest, null);
 
-            foreach (Cell cell in offerer.OwnedCells)
+            foreach (int cellNumber in game.CurrentTradeOffer.OffererProposition.CellNumbers)
             {
-                if (!game.CurrentTradeOffer.OffererProposition.CellNumbers.Contains(cell.Number))
+                if (!offerer.OwnedCells.Any(c => c.Number == cellNumber))
                     return new ServiceResponse<AcceptTradeDto>(false, "Гравець, який робить пропозицію обміну, не володіє всіма клітинками, які він пропонує", HttpStatusCode.BadRequest, null);
             }
 
-            foreach (Cell cell in offeree.OwnedCells)
+            foreach (int cellNumber in game.CurrentTradeOffer.OffereeProposition.CellNumbers)
             {
-                if (!game.CurrentTradeOffer.OffereeProposition.CellNumbers.Contains(cell.Number))
+                if (!offeree.OwnedCells.Any(c => c.Number == cellNumber))
                     return new ServiceResponse<AcceptTradeDto>(false, "Гравець, який отримує пропозицію обміну, не володіє всіма клітинками, які він пропонує", HttpStatusCode.BadRequest, null);
             }
 
